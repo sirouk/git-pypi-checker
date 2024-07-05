@@ -16,7 +16,7 @@ fetch_github_release() {
   if [ "$version" = "latest" ]; then
     release_url=$(curl -s "https://api.github.com/repos/$org/$repo/releases/latest" | grep tarball_url | cut -d '"' -f 4)
   else
-    release_url=$(curl -s "https://api.github.com/repos/$org/$repo/releases/tags/v$version" | grep tarball_url | cut -d '"' -f 4)
+    release_url=$(curl -s "https://api.github.com/repos/$org/$repo/releases/tags/$version" | grep tarball_url | cut -d '"' -f 4)
   fi
   
   if [ -z "$release_url" ]; then
@@ -25,7 +25,7 @@ fetch_github_release() {
   fi
   
   local github_tarball="github_${version}.tar.gz"
-  curl -L -o $github_tarball $release_url
+  curl -sL -o $github_tarball $release_url
   mkdir -p github_source
   tar -xzf $github_tarball -C github_source --strip-components=1 > /dev/null 2>&1
 }
@@ -48,7 +48,7 @@ fetch_pypi_source() {
   fi
   
   local pypi_tarball="pypi_${version}.tar.gz"
-  curl -L -o $pypi_tarball $release_url
+  curl -sL -o $pypi_tarball $release_url
   mkdir -p pypi_source
   tar -xzf $pypi_tarball -C pypi_source --strip-components=1 > /dev/null 2>&1
 }
@@ -100,7 +100,7 @@ main() {
     fetch_and_check_all_github_releases $github_org $github_repo $pypi_repo
   else
     echo "Fetching GitHub release from $github_org/$github_repo (version: $version)"
-    fetch_github_release $github_org $github_repo $version
+    fetch_github_release $github_org $github_repo v$version
     
     echo "Fetching PyPI source for $pypi_repo (version: $version)"
     fetch_pypi_source $pypi_repo $version
