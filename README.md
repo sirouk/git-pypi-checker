@@ -61,6 +61,15 @@ Attempt to fetch and recursively check all versions:
 ./fetch_and_diff.sh opentensor bittensor bittensor all
 ```
 
+## Other Possible uses
+When fired using the latest or version-specific method, the script will `exit 1` upon any diff.
+This becomes a handy safeguard when chained with a subsequent update command.
+
+For example:
+```bash
+./fetch_and_diff.sh opentensor bittensor bittensor latest && python3 -m pip install --upgrade bittensor
+```
+
 
 ### Output
 
