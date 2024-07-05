@@ -4,7 +4,7 @@
 sudo apt install -y jq curl tar
 
 # create variable for workspace
-export GHPP_WORKSPACE=$HOME/ghpp_check_tmp
+export GHPP_WORKSPACE=$HOME/ghppc_tmp
 
 
 # Function to create a temp workspace for diff checking
@@ -31,6 +31,7 @@ fetch_github_release() {
     release_url=$(curl -s "https://api.github.com/repos/$org/$repo/releases/tags/v$version" | grep tarball_url | cut -d '"' -f 4)
     if [ -z "$release_url" ]; then
       echo "Failed to fetch GitHub release URL."
+      rm -rf $GHPP_WORKSPACE
       exit 1
     fi
   fi
@@ -56,6 +57,7 @@ fetch_pypi_source() {
   
   if [ -z "$release_url" ]; then
     echo "Failed to fetch PyPI release URL."
+    rm -rf $GHPP_WORKSPACE
     exit 1
   fi
   
@@ -70,7 +72,8 @@ fetch_pypi_source() {
 perform_diff_check() {
   local dir=$1
   local continue_on_error=$2
-  local relname=$3
+  local repnm=$3
+  local vernm=$4
 
   cd $GHPP_WORKSPACE/
   diff_output=$(diff -r "github_source/$dir" "pypi_source/$dir")
@@ -81,12 +84,13 @@ perform_diff_check() {
     echo "$diff_output"
     
     # Copy before continuing to preserve 
-    echo "Repos with diff will be kept in $GHPP_WORKSPACE-$relname-hasdiff"
+    echo "Repos with diff will be kept in $GHPP_WORKSPACE-$repnm-$vernm-hasdiff"
     sleep 5
-    cp -rf $GHPP_WORKSPACE $GHPP_WORKSPACE-$relname-hasdiff
+    cp -rf $GHPP_WORKSPACE $GHPP_WORKSPACE-$repnm-$vernm-hasdiff
 
     if [ $continue_on_error = 0 ]; then
       echo "Possibly unsafe to proceeed, exiting!"
+      rm -rf $GHPP_WORKSPACE
       exit 1
     fi    
   fi
@@ -106,7 +110,7 @@ fetch_and_check_all_github_releases() {
     echo "Fetching PyPI source $release"
     fetch_pypi_source $prepo $release
     echo "Performing diff check on the repos"
-    perform_diff_check $grepo 1 $release
+    perform_diff_check $grepo 1 $grepo $release
   done
 }
 
@@ -114,6 +118,7 @@ fetch_and_check_all_github_releases() {
 main() {
   if [ "$#" -lt 3 ]; then
     echo "Usage: $0 <github_org> <github_repo> <pypi_repo> [version]"
+    rm -rf $GHPP_WORKSPACE
     exit 1
   fi
   
@@ -135,7 +140,7 @@ main() {
     fetch_pypi_source $pypi_repo $version
     
     echo "Performing diff check on the repos"
-    perform_diff_check $github_repo 0 $version
+    perform_diff_check $github_repo 0 $github_repo $version
     make_clean_diff_check_workspace
   fi
 }
