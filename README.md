@@ -54,6 +54,14 @@ Diff example:
 ./fetch_and_diff.sh opentensor bittensor bittensor 6.12.2
 ```
 
+3. Fetch and check diff on all releases:
+
+Attempt to fetch and recursively check all versions:
+```bash
+./fetch_and_diff.sh opentensor bittensor bittensor all
+```
+
+
 ### Output
 
 The script will output the following information:
