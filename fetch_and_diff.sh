@@ -12,7 +12,7 @@ make_clean_diff_check_workspace() {
   local exit=$1
   
   rm -rf $GHPP_WORKSPACE
-  if [ "$exit" -gt -1 ]; then
+  if [ $exit -gt -1 ]; then
     exit $exit
   fi
   mkdir -p $GHPP_WORKSPACE
