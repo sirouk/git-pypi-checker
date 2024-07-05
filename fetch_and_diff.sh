@@ -70,7 +70,7 @@ perform_diff_check() {
 fetch_and_check_all_github_releases() {
   local gorg=$1
   local grepo=$2
-  local prepo=$2
+  local prepo=$3
   releases=$(curl -s "https://api.github.com/repos/$gorg/$grepo/releases" | jq -r '.[].tag_name')
 
   for release in $releases; do
