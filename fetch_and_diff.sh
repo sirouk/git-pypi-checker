@@ -12,7 +12,7 @@ make_clean_diff_check_workspace() {
   local exit=$1
   
   rm -rf $GHPP_WORKSPACE
-  if [ ! -n $exit ]; then
+  if [ "$exit" -gt -1 ]; then
     exit $exit
   fi
   mkdir -p $GHPP_WORKSPACE
@@ -113,7 +113,7 @@ fetch_and_check_all_github_releases() {
     fetch_pypi_source $prepo $release
     echo "Performing diff check on the repos"
     perform_diff_check $grepo 1 $grepo $release
-    make_clean_diff_check_workspace
+    make_clean_diff_check_workspace -1
   done
 }
 
@@ -130,7 +130,7 @@ main() {
   local pypi_repo=$3
   local version=${4:-latest}
 
-  make_clean_diff_check_workspace
+  make_clean_diff_check_workspace -1
   
   if [ "$version" = "all" ]; then
     fetch_and_check_all_github_releases $github_org $github_repo $pypi_repo
