@@ -20,8 +20,12 @@ fetch_github_release() {
   fi
   
   if [ -z "$release_url" ]; then
-    echo "Failed to fetch GitHub release URL."
-    exit 1
+    # Try again with v prefix for tagging versions
+    release_url=$(curl -s "https://api.github.com/repos/$org/$repo/releases/tags/v$version" | grep tarball_url | cut -d '"' -f 4)
+    if [ -z "$release_url" ]; then
+      echo "Failed to fetch GitHub release URL."
+      exit 1
+    fi
   fi
   
   local github_tarball="github_${version}.tar.gz"
@@ -103,7 +107,7 @@ main() {
     fetch_and_check_all_github_releases $github_org $github_repo $pypi_repo
   else
     echo "Fetching GitHub release from $github_org/$github_repo (version: $version)"
-    fetch_github_release $github_org $github_repo v$version
+    fetch_github_release $github_org $github_repo $version
     
     echo "Fetching PyPI source for $pypi_repo (version: $version)"
     fetch_pypi_source $pypi_repo $version
