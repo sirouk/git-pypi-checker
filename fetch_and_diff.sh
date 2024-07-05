@@ -9,7 +9,12 @@ export GHPP_WORKSPACE=$HOME/ghppc_tmp
 
 # Function to create a temp workspace for diff checking
 make_clean_diff_check_workspace() {
+  local exit=$1
+  
   rm -rf $GHPP_WORKSPACE
+  if [ ! -n $exit ]; then
+    exit $exit
+  fi
   mkdir -p $GHPP_WORKSPACE
 }
 
@@ -30,9 +35,8 @@ fetch_github_release() {
     # Try again with v prefix for tagging versions
     release_url=$(curl -s "https://api.github.com/repos/$org/$repo/releases/tags/v$version" | grep tarball_url | cut -d '"' -f 4)
     if [ -z "$release_url" ]; then
-      echo "Failed to fetch GitHub release URL."
-      rm -rf $GHPP_WORKSPACE
-      exit 1
+      echo "Failed to fetch GitHub release URL ($release_url)"
+      make_clean_diff_check_workspace 1
     fi
   fi
   
@@ -58,7 +62,7 @@ fetch_pypi_source() {
   if [ -z "$release_url" ]; then
     echo "Failed to fetch PyPI release URL."
     rm -rf $GHPP_WORKSPACE
-    exit 1
+    make_clean_diff_check_workspace 1
   fi
   
   local pypi_tarball="pypi_${version}.tar.gz"
@@ -90,8 +94,7 @@ perform_diff_check() {
 
     if [ $continue_on_error = 0 ]; then
       echo "Possibly unsafe to proceeed, exiting!"
-      rm -rf $GHPP_WORKSPACE
-      exit 1
+      make_clean_diff_check_workspace 1
     fi    
   fi
 }
@@ -104,22 +107,23 @@ fetch_and_check_all_github_releases() {
   releases=$(curl -s "https://api.github.com/repos/$gorg/$grepo/releases" | jq -r '.[].tag_name')
 
   for release in $releases; do
-    make_clean_diff_check_workspace
     echo "Fetching GitHub release $release"
     fetch_github_release $gorg $grepo $release
     echo "Fetching PyPI source $release"
     fetch_pypi_source $prepo $release
     echo "Performing diff check on the repos"
     perform_diff_check $grepo 1 $grepo $release
+    make_clean_diff_check_workspace
   done
 }
+
 
 # Main script
 main() {
   if [ "$#" -lt 3 ]; then
     echo "Usage: $0 <github_org> <github_repo> <pypi_repo> [version]"
     rm -rf $GHPP_WORKSPACE
-    exit 1
+    make_clean_diff_check_workspace 1
   fi
   
   local github_org=$1
@@ -131,7 +135,6 @@ main() {
   
   if [ "$version" = "all" ]; then
     fetch_and_check_all_github_releases $github_org $github_repo $pypi_repo
-    make_clean_diff_check_workspace
   else
     echo "Fetching GitHub release from $github_org/$github_repo (version: $version)"
     fetch_github_release $github_org $github_repo $version
@@ -141,8 +144,8 @@ main() {
     
     echo "Performing diff check on the repos"
     perform_diff_check $github_repo 0 $github_repo $version
-    make_clean_diff_check_workspace
   fi
+  make_clean_diff_check_workspace 0
 }
 
 main "$@"
