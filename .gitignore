@@ -2,3 +2,4 @@ github_source/
 pypi_source/
 github_*.tar.gz 
 pypi_*.tar.gz
+ghpp_check_tmp/
