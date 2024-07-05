@@ -79,12 +79,16 @@ perform_diff_check() {
     echo "No differences found between the GitHub and PyPI sources for the '$dir' directory."
   else
     echo "$diff_output"
-    if [ $continue_on_error = 0 ]; then
-      exit 1
-    fi
+    
     # Copy before continuing to preserve 
     echo "Repos with diff will be kept in $GHPP_WORKSPACE-$relname-hasdiff"
+    sleep 5
     cp -rf $GHPP_WORKSPACE $GHPP_WORKSPACE-$relname-hasdiff
+
+    if [ $continue_on_error = 0 ]; then
+      echo "Possibly unsafe to proceeed, exiting!"
+      exit 1
+    fi    
   fi
 }
 
