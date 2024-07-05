@@ -56,13 +56,16 @@ fetch_pypi_source() {
 # Function to perform a diff check on the specified directory
 perform_diff_check() {
   local dir=$1
-  local diff_output
+  local continue_on_error=$2
   diff_output=$(diff -r "github_source/$dir" "pypi_source/$dir")
 
   if [ -z "$diff_output" ]; then
     echo "No differences found between the GitHub and PyPI sources for the '$dir' directory."
   else
     echo "$diff_output"
+    if [ $continue_on_error = 0 ]; then
+      exit 1
+    fi
   fi
 }
 
@@ -80,7 +83,7 @@ fetch_and_check_all_github_releases() {
     echo "Fetching PyPI source $release"
     fetch_pypi_source $prepo $release
     echo "Performing diff check on the repos"
-    perform_diff_check $grepo
+    perform_diff_check $grepo 1
   done
 }
 
@@ -105,8 +108,8 @@ main() {
     echo "Fetching PyPI source for $pypi_repo (version: $version)"
     fetch_pypi_source $pypi_repo $version
     
-    echo "Performing diff check on the repos."
-    perform_diff_check $github_repo
+    echo "Performing diff check on the repos"
+    perform_diff_check $github_repo 0
   fi
 }
 
