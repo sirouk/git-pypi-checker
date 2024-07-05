@@ -66,6 +66,24 @@ perform_diff_check() {
   fi
 }
 
+# Function to fetch all GitHub releases
+fetch_and_check_all_github_releases() {
+  local gorg=$1
+  local grepo=$2
+  local prepo=$2
+  releases=$(curl -s "https://api.github.com/repos/$gorg/$grepo/releases" | jq -r '.[].tag_name')
+
+  for release in $releases; do
+    rm -rf github_source pypi_source github_*.tar.gz pypi_*.tar.gz
+    echo "Fetching GitHub release $release"
+    fetch_github_release $gorg $grepo $release
+    echo "Fetching PyPI source $release"
+    fetch_pypi_source $prepo $release
+    echo "Performing diff check on the repos"
+    perform_diff_check $grepo
+  done
+}
+
 # Main script
 main() {
   if [ "$#" -lt 3 ]; then
@@ -78,14 +96,18 @@ main() {
   local pypi_repo=$3
   local version=${4:-latest}
   
-  echo "Fetching GitHub release from $github_org/$github_repo (version: $version)"
-  fetch_github_release $github_org $github_repo $version
-  
-  echo "Fetching PyPI source for $pypi_repo (version: $version)"
-  fetch_pypi_source $pypi_repo $version
-  
-  echo "Performing diff check on the 'bittensor' directory"
-  perform_diff_check "bittensor"
+  if [ "$version" = "all" ]; then
+    fetch_and_check_all_github_releases $github_org $github_repo $pypi_repo
+  else
+    echo "Fetching GitHub release from $github_org/$github_repo (version: $version)"
+    fetch_github_release $github_org $github_repo $version
+    
+    echo "Fetching PyPI source for $pypi_repo (version: $version)"
+    fetch_pypi_source $pypi_repo $version
+    
+    echo "Performing diff check on the repos."
+    perform_diff_check $github_repo
+  fi
 }
 
 main "$@"
