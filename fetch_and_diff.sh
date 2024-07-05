@@ -61,7 +61,6 @@ fetch_pypi_source() {
   
   if [ -z "$release_url" ]; then
     echo "Failed to fetch PyPI release URL."
-    rm -rf $GHPP_WORKSPACE
     make_clean_diff_check_workspace 1
   fi
   
@@ -89,8 +88,9 @@ perform_diff_check() {
     
     # Copy before continuing to preserve 
     echo "Repos with diff will be kept in $GHPP_WORKSPACE-$repnm-$vernm-hasdiff"
+    rm -rf $GHPP_WORKSPACE-$repnm-$vernm-hasdiff
+    mv $GHPP_WORKSPACE $GHPP_WORKSPACE-$repnm-$vernm-hasdiff
     sleep 5
-    cp -rf $GHPP_WORKSPACE $GHPP_WORKSPACE-$repnm-$vernm-hasdiff
 
     if [ $continue_on_error = 0 ]; then
       echo "Possibly unsafe to proceeed, exiting!"
@@ -122,7 +122,6 @@ fetch_and_check_all_github_releases() {
 main() {
   if [ "$#" -lt 3 ]; then
     echo "Usage: $0 <github_org> <github_repo> <pypi_repo> [version]"
-    rm -rf $GHPP_WORKSPACE
     make_clean_diff_check_workspace 1
   fi
   
